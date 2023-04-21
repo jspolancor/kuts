@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kuts</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:300,400,500,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Freckle+Face" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app" v-cloak>
+        <div class="loader" v-if="authLoading || showLoader">
+            <img src="img/loader.svg" alt="Loading...">
+        </div>
+        <div v-if="!authLoading && !showLoader" class="fh">
+            <div class="login-container animated fadeIn fast" v-if="!user">
+                <div class="logo-container">
+                    <img src="img/logo.svg">
+                </div>
+                <div class="login">
+                    <form @submit.prevent="onSubmit">
+                        <div class="text-center slogan">
+                            <h1 class="logo-txt">{{ $t("login.title") }}</h1>
+                            <p>{{ $t("login.slogan") }}</p>
+                        </div>
+                        <br>
+                        <div class="field" :class="{error: errors.has('email')}">
+                            <label for="email">{{ $t("login.email") }}</label>
+                            <input :disabled="doingAuth" v-validate="'required|email'" name="email" v-model="email">
+                            <small class="error-message" v-if="errors.has('email')">
+                                {{ $t("login.emailError") }}
+                            </small>
+                        </div>
+                        <div class="field" :class="{error: errors.has('password')}">
+                            <div>
+                                <label for="password">{{ $t("login.password") }}</label>
+                                <small @click="openForgotPassword" class="forgot link">{{ $t("login.forgotPassword") }}</small>
+                            </div>
+                            <input :disabled="doingAuth" v-validate="'required'" type="password" name="password" v-model="password">
+                            <small class="error-message" v-if="errors.has('password')">
+                                {{ $t("login.passwordError") }}
+                            </small>
+                        </div>
+                        <button :disabled="this.errors.any() || doingAuth || !email || !password" type="submit">
+                            <img v-if="doingAuth" src="img/dot-loader.gif" alt="loading" style="height: 22px;">
+                            <span v-if="!doingAuth">{{ $t("login.button") }}</span>
+                        </button>
+                        <small>{{ $t("login.newAt") }}</small>
+                        <a class="link" @click="openSignUp">
+                            <small> {{ $t("login.createAccount") }}</small>
+                        </a>
+                        <!--small>{{ $t("login.or") }}</small>
+                        <a class="link">
+                            <small> {{ $t("login.trialStart") }}</small>
+                        </a-->
+                    </form>
+                </div>
+            </div>
+            <div class="main animated fadeIn fast" v-if="user">
+                <div class="topbar shadow">
+                    <h1 class="logo-txt" style="margin: 0">Kuts</h1>
+                    <img @click="showConfig = !showConfig" class="cog" src="img/cog.png">
+                </div>
+                <div class="main-app">
+                    <div class="config-and-feedback animated fadeIn slow" v-show="showConfig">
+                        <div class="config">
+                            <div class="card-header">
+                                <h2>{{ $t("app.config") }}</h2>
+                                <span class="emoji">⚙️</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="internal-field">
+                                    <div class="label">
+                                        <label for="silenceTime">{{ $t("app.language") }}</label>
+                                    </div>
+                                    <select name="language" id="language" @change="changeLanguage" v-model="language">
+                                        <option v-for="language in languages" :value="language.value">{{ language.name }}</option>
+                                    </select>
+                                </div>
+                                <div class="internal-field">
+                                    <div class="label">
+                                        <label for="silenceTime">{{ $t("app.notifications") }}</label>
+                                    </div>
+                                    <select name="notifications" id="notifications" v-model="showNotifications" @change="changeNotificationSettings">
+                                        <option value="1">{{ $t("app.yes") }}</option>
+                                        <option value="0">{{ $t("app.no") }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="account">
+                            <div class="card-header">
+                                <h2>{{ $t("app.account") }}</h2>
+                                <span class="emoji">😀</span>
+                            </div>
+                            <div class="card-content">
+                                <div class="internal-field">
+                                    <div class="label">
+                                        <label for="silenceTime">{{ user.user }}</label>
+                                    </div>
+                                    <button style="margin-top: 1em;" @click="logout">{{ $t("app.logout") }}</button>
+                                </div>
+                                <div class="internal-field">
+                                    <div class="label">
+                                        <label for="silenceTime">{{ $t("app.plan") }}</label>
+                                    </div>
+                                    <span v-if="!user.plan">{{ $t("app.freePlan") }}</span>
+                                    <span v-if="user.plan">{{ $t("app.proPlan") }}</span>
+                                </div>                            
+                                <div class="internal-field" v-if="!user.plan">
+                                    <div class="label">
+                                        <span>{{ $t("app.upgradeCopy") }}</span>
+                                    </div>
+                                    <button style="margin-top: 1em;" @click="openUpgrade">{{ $t("app.upgrade") }}</button>
+                                </div>                            
+                            </div>                            
+                        </div>     
+                        <div class="feedback">
+                            <div class="card-header">
+                                <h2>{{ $t("app.feedback") }}</h2>
+                                <span class="emoji">👋</span>
+                            </div>
+                            <div class="card-content">
+                                <p style="margin: 0">{{ $t("app.feedbackContent") }}</p>
+                                <textarea :placeholder="$t('app.feedback')" name="feedback" id="feedback" v-model="feedback" cols="30" rows="6"></textarea>
+                                <button :disabled="feedback.length < 3" @click="sendFeedback">{{ $t("app.sendFeedback") }}</button>
+                            </div>
+                        </div>
+                        <div>
+                            <button @click="showConfig = !showConfig">{{ $t("app.backToEditor") }}</button>                   
+                        </div>                        
+                    </div>
+                    <div class="app-container" v-show="!showConfig">
+                        <div class="video-area">
+                            <div v-if="showUpdateInstall" class="custom-watermark animated bounce" style="margin-bottom: 1.5em;">
+                                <div class="card-header">
+                                    <h2>{{ $t("app.updateDownloaded") }}</h2>
+                                    <span class="emoji">🔔</span>
+                                </div>
+                                <div class="card-content">                                    
+                                    <p>{{ $t("app.updateDownloadedCopy") }}</p>
+                                    <button @click="quitAndInstall">{{ $t("app.quitAndInstall") }}</button>
+                                </div>
+                            </div>
+                            <div class="video-container">
+                                <div class="card-header">
+                                    <h2>{{ $t("app.video") }}</h2>
+                                    <span class="emoji">📹 </span>
+                                </div>
+                                <div class="card-content">
+                                    <button :disabled="processingVideo" v-if="selectedFile" @click="selectFile">{{ $t("app.selectAnother") }}</button>
+                                    <div class="video-bg">
+                                        <button class="animated pulse fast" v-if="!selectedFile" @click="selectFile">{{ $t("app.selectFile") }}</button>
+                                        <div class="tabs" v-if="selectedFile">
+                                            <div class="triggers">
+                                                <div @click="tab = 1" :class="['trigger', tab == 1 ? 'active' : '']">
+                                                    <p>{{ $t("app.video") }}</p>
+                                                </div>
+                                                <div v-if="processedFile" @click="tab = 2" :class="['trigger', tab == 2 ? 'active' : '']">
+                                                    <p>{{ $t("app.finalResult") }}</p>                                                        
+                                                </div>
+                                            </div>    
+                                            <div class="original-video animated fadeIn fast" v-show="tab == 1">
+                                                <video :src="selectedFile" controls="true"></video>
+                                            </div>
+                                            <div class="processed-video animated fadeIn fast" v-show="tab == 2 && processedFile">
+                                                <video :src="processedFile" controls="true"></video>
+                                                <div @click="openFile(processedFile)" class="open-folder">
+                                                    <img src="img/folder.png">                                                    
+                                                </div>
+                                            </div>
+                                        </div>                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="magic-button animated slideInDown fast delay-2s" v-show="selectedFile">
+                                    <button :disabled="!selectedFile || processingVideo" @click="processVideo">{{ $t("app.start") }}</button>
+                            </div>
+                            <div class="loaders animated fadeIn slow" v-show="processingVideo && !showConfig">
+                                <div class="card-header">
+                                    <h2>{{ $t("app.progress") }}</h2>
+                                    <span class="emoji">🤖</span>
+                                </div>
+                                <div class="card-content">
+                                    <div class="progress-bar-container">
+                                        <span>{{ $t("app.gettingLevels") }} {{ levelsProgress }}%</span>
+                                        <div class="progress">
+                                            <div class="current" :style="{ width: `${levelsProgress}%` }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <span>{{ $t("app.analyzing") }} {{ analysisProgress }}%</span>
+                                        <div class="progress">
+                                            <div class="current" :style="{ width: `${analysisProgress}%` }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <span>{{ $t("app.creatingJumpCuts") }} {{ trimProgress }}%</span>
+                                        <div class="progress">
+                                            <div class="current" :style="{ width: `${trimProgress}%` }"></div>
+                                        </div>
+                                    </div>
+                                    <div style="width: 100%">
+                                        <small style="float: right" class="link" @click="cancelProcess">{{ $t("app.cancelProcess") }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-area">
+                            <div class="jump-cuts">
+                                <div class="card-header">
+                                    <h2>{{ $t("app.jumpCuts") }}</h2>
+                                    <span class="emoji">✂️</span>
+                                </div>
+                                <div class="card-content" style="min-height: 186px;">
+                                    <div v-if="!showCutsHelp" style="width: 100%;">
+                                            <div v-if="!user.plan">
+                                                <p>{{ $t("app.noJumpCuts") }}</p>
+                                                <p @click="openUpgrade" class="link">{{ $t("app.upgradeCopy") }}</p>
+                                            </div>
+                                            <!--div class="internal-field">                            
+                                                <label for="jumpcuts">{{ $t("app.applyJumpcuts") }}</label>
+                                                <input :disabled="processingVideo || !user" type="checkbox" name="jumpcuts" v-model="jumpcuts">
+                                            </div-->
+                                            <div class="internal-field">
+                                                <div class="label">
+                                                    <label for="silenceTime">{{ $t("app.removeSilences") }}</label>
+                                                    <small>{{ $t("app.inMiliseconds") }}</small>
+                                                </div>                                        
+                                                <input :disabled="processingVideo || !user.plan" type="number" name="silenceTime" v-model="silenceTime">
+                                            </div>
+                                            <div class="internal-field" style="flex-direction: column; align-items: start;">
+                                                <div class="label">
+                                                    <label for="decibels">{{ $t("app.silenceVolume") }}</label>
+                                                    <strong style="font-weight: 500;">{{ decibels }}%</strong>
+                                                </div>
+                                                <input min="1" max="100" :disabled="processingVideo || !user.plan" type="range" name="decibels"
+                                                    v-model="decibels">
+                                            </div>
+                                            <div class="internal-field" style="flex-direction: column; align-items: start;">
+                                                <div class="label">
+                                                    <label for="breathing">{{ $t("app.breathing") }}</label>
+                                                    <strong style="font-weight: 500;">{{breathing}} {{ $t("app.miliseconds") }}</strong>
+                                                </div>                                                
+                                                <input min="100" max="2000" step="1" :disabled="processingVideo || !user.plan" type="range" name="breathing" v-model="breathing">
+                                            </div>
+                                            <div style="width: 100%">
+                                                <small v-if="user.plan" @click="restoreDefaults" style="float: left" class="link">{{ $t("app.restoreDefaults") }}</small>
+                                                <small @click="showCutsHelp = true" style="float: right" class="link">{{ $t("app.whatIsThis") }}</small>
+                                            </div>
+                                    </div>
+                                    <div v-show="showCutsHelp" class="animated fadeIn fast">
+                                        <span>
+                                            🤔
+                                        </span>
+                                        <div v-html="$t('app.cutsHelp')">
+                                        </div>                                 
+                                        <div style="width: 100%">
+                                            <small @click="showCutsHelp = false" style="float: left; cursor: pointer;">⬅️</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--div class="custom-watermark shadow" style="margin-top: 1.5em;">
+                                <div class="card-header">
+                                    <h2>{{ $t("app.customWatermark") }}</h2>
+                                    <span class="emoji">💧</span>
+                                </div>
+                                <div class="card-content">                                    
+                                    <div class="watermark-selector">
+                                        <img src="img/logo.svg" alt="">
+                                    </div>
+                                </div>
+                            </div-->
+
+                        </div>
+                    </div>
+                    <!--div class="sound-container">
+                        <div class="card-header">
+                            <h2>{{ $t("app.soundFile") }}</h2>
+                        </div>
+                        <div class="card-content">
+                            <button v-if="!selectedSound" :disabled="processingVideo" @click="selectSound">{{ $t("app.addSound") }}</button>
+                            <button v-if="selectedSound" :disabled="processingVideo" @click="selectSound">{{ $t("app.addAnotherSound") }}</button>
+                            <audio v-if="selectedSound" :src="selectedSound" controls="true"></audio>
+                            <div style="width: 100%; margin-top: 0.5em;" v-if="selectedSound">
+                                <small style="float: right" class="link" @click="selectedSound = ''">{{ $t("app.removeSoundfile") }}</small>
+                            </div>
+                        </div>
+                    </div-->                    
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        // You can also require other files to run in this process
+        require('./renderer.js')
+    </script>
+    <script src="js/lib/vue.js"></script>
+    <script src="js/lib/vue-i18n.js"></script>
+    <script src="js/lib/vee-validate.js"></script>
+    <script src="js/lib/firebase.js"></script>
+    <script src="js/lib/firebase-auth.js"></script>
+    <script src="js/lib/firebase-database.js"></script>
+    <script src="translations.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

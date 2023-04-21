@@ -1,0 +1,19 @@
+{
+  "name": "kuts",
+  "productName": "Kuts",
+  "version": "1.0.0",
+  "description": "Video editor that edits your video blogs automatically",
+  "main": "main.js",
+  "repository": "https://github.com/electron/electron-quick-start",
+  "author": "Juan Polanco",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "electron-builder-squirrel-windows": "^20.28.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^2.0.0",
+    "ffmpeg-static": "^2.3.0",
+    "ffprobe-static": "^2.0.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "rimraf": "^2.6.2"
+  }
+}

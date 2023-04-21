@@ -1,0 +1,12 @@
+<svg width="580" height="400" xmlns="http://www.w3.org/2000/svg"> 
+ <g>  
+  <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g>  
+  <path stroke="#000" transform="rotate(89.99241638183594 310.32946777343756,168.49707031249997) " id="svg_1" d="m158.681741,315.408366l151.647714,-293.822602l151.647714,293.822602l-303.295427,0z" stroke-width="0" fill="#f26419"/>
+  <path stroke="#000" transform="rotate(89.99241638183594 342.3294677734375,231.49707031249997) " id="svg_3" d="m190.68174,378.40837l151.64771,-293.82261l151.64772,293.82261l-303.29543,0z" stroke-width="0" fill="#fcba04"/>
+  <path stroke="#f26419" transform="rotate(89.99241638183594 375.3294677734375,178.49705505371097) " id="svg_4" d="m223.68174,325.40837l151.64771,-293.82261l151.64772,293.82261l-303.29543,0z" stroke-width="0" fill="#e0ca3c"/>
+ </g>
+</svg>
